@@ -1,25 +1,30 @@
-var builder = WebApplication.CreateBuilder(args);
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using TM.Messaging.Config;
+using TM.Messaging.Consumer;
+using TM.Messaging.Factories;
+using TM.Messaging.Handlers;
+using TM.Messaging.Interfaces;
+using TM.Services;
 
-// Add services to the container.
+var builder = Host.CreateDefaultBuilder(args)
+    .ConfigureServices((context, services) =>
+    {
+        services.Configure<RabbitMQSettings>(context.Configuration.GetSection("RabbitMQ"));
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+        services.AddSingleton<RabbitMQConnectionFactory>();
+        services.AddSingleton<RabbitMqMessageConsumer>();
+        services.AddSingleton<RabbitMqDlqConsumer>();
 
-var app = builder.Build();
+        // Adcionar todos os Handlers das filas
+        services.AddSingleton<IMessageHandler, EmailHandler>();
+        services.AddSingleton<MessageDispatcher>();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+        services.AddHostedService<RabbitMQConsumerService>();
+    });
 
-app.UseHttpsRedirection();
+Console.WriteLine("olá mundo denovo");
 
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
+var host = builder.Build();
+await host.RunAsync();

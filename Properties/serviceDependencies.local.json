@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "rabbitmq1": {
-      "ignored": "true",
-      "type": "rabbitmq"
-    }
-  }
-}
