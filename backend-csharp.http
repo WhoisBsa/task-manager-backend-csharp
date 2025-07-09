@@ -4,3 +4,6 @@ GET {{backend_csharp_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+GET {{backend_csharp_HostAddress}}/gethost/
+Accept: application/json
