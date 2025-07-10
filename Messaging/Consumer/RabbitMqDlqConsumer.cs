@@ -3,9 +3,6 @@ using TM.Messaging.Interfaces;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
-using TM.Messaging.Config;
-using Newtonsoft.Json;
-using System.Threading.Channels;
 using Microsoft.Extensions.Logging;
 
 namespace TM.Messaging.Consumer
@@ -22,7 +19,7 @@ namespace TM.Messaging.Consumer
         {
             _connectionFactory = connectionFactory;
             _logger = logger;
-            _connection = _connectionFactory.CreateConnection();
+            _connection = _connectionFactory.GetConnection() ?? _connectionFactory.CreateConnection();
             _channel = _connection.CreateModel();
         }
 
@@ -33,7 +30,7 @@ namespace TM.Messaging.Consumer
             // Garante que a fila DLQ existe
             _channel.QueueDeclare(queue: dlqName, durable: true, exclusive: false, autoDelete: false);
 
-            var consumer = new AsyncEventingBasicConsumer(_channel);
+            var consumer = new EventingBasicConsumer(_channel);
 
             consumer.Received += async (model, ea) =>
             {

@@ -1,8 +1,12 @@
+using Newtonsoft.Json;
+
 namespace TM.Models
 {
     public class MessageDto
     {
-        public string Type { get; set; }
-        public string Content { get; set; }
+        [JsonProperty("type")]
+        public required string Type { get; set; }
+        [JsonProperty("content")]
+        public required string Content { get; set; }
     }
 }
