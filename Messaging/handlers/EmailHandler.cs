@@ -9,10 +9,10 @@ namespace TM.Messaging.Handlers
     {
         public string Type => Utils.QueueNames.SendTodoEmail;
 
-        public Task HandleAsync(string content)
+        public async Task HandleAsync(string content)
         {
+            await Task.Delay(4000);
             Console.WriteLine($"[EMAIL] Mensagem recebida: {content}");
-            return Task.CompletedTask;
         }
     }
 }

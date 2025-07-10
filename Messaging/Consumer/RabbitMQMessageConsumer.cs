@@ -4,8 +4,6 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using TM.Messaging.Config;
-using Newtonsoft.Json;
-using System.Threading.Channels;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 
@@ -31,6 +29,11 @@ namespace TM.Messaging.Consumer
             _channel = _connection.CreateModel();
             _messages = rabbitMqSettings.Value.Messages;
 
+            CreateQueues();
+        }
+
+        private void CreateQueues()
+        {
             // Cria a DLX compartilhada
             _channel.ExchangeDeclare("dead-letter-exchange", ExchangeType.Direct, durable: true);
 
@@ -75,8 +78,7 @@ namespace TM.Messaging.Consumer
 
         public void ConsumeAsync(Func<string, Task> onMessageReceived, string queueName)
         {
-           _logger.LogInformation("Registrando consumidor para fila: {QueueName}", queueName);
-            var consumer = new AsyncEventingBasicConsumer(_channel);
+            var consumer = new EventingBasicConsumer(_channel);
             consumer.Received += async (model, ea) =>
             {
                 _logger.LogInformation("[RabbitMQ] Mensagem recebida na fila {QueueName}.", queueName);
