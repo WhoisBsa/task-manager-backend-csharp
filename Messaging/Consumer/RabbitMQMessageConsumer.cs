@@ -7,6 +7,7 @@ using TM.Messaging.Config;
 using Newtonsoft.Json;
 using System.Threading.Channels;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 
 namespace TM.Messaging.Consumer
 {
@@ -16,17 +17,24 @@ namespace TM.Messaging.Consumer
         private readonly IConnection _connection;
         private readonly IModel _channel;
         private readonly List<string> _consumerTags = [];
+        private readonly ILogger _logger;
+        private readonly List<MessageSettings> _messages = [];
 
-        public RabbitMqMessageConsumer(RabbitMQConnectionFactory connectionFactory, IOptions<List<MessageSettings>> messages)
+        public RabbitMqMessageConsumer(
+            RabbitMQConnectionFactory connectionFactory,
+            IOptions<RabbitMQSettings> rabbitMqSettings,
+            ILogger<RabbitMqMessageConsumer> logger)
         {
+            _logger = logger;
             _connectionFactory = connectionFactory;
-            _connection = _connectionFactory.CreateConnection();
+            _connection = _connectionFactory.GetConnection() ?? _connectionFactory.CreateConnection();
             _channel = _connection.CreateModel();
+            _messages = rabbitMqSettings.Value.Messages;
 
-             // Cria a DLX compartilhada
+            // Cria a DLX compartilhada
             _channel.ExchangeDeclare("dead-letter-exchange", ExchangeType.Direct, durable: true);
 
-            foreach (var message in messages.Value)
+            foreach (var message in _messages)
             {
                 _channel.ExchangeDeclare(exchange: message.Exchange, ExchangeType.Direct, durable: true);
 
@@ -67,10 +75,14 @@ namespace TM.Messaging.Consumer
 
         public void ConsumeAsync(Func<string, Task> onMessageReceived, string queueName)
         {
+           _logger.LogInformation("Registrando consumidor para fila: {QueueName}", queueName);
             var consumer = new AsyncEventingBasicConsumer(_channel);
             consumer.Received += async (model, ea) =>
             {
-                string message = Encoding.UTF8.GetString(ea.Body.ToArray());
+                _logger.LogInformation("[RabbitMQ] Mensagem recebida na fila {QueueName}.", queueName);
+
+                var message = Encoding.UTF8.GetString(ea.Body.ToArray());
+                _logger.LogInformation("[RabbitMQ] Conteúdo: {Message}", message);
 
                 try
                 {
@@ -81,14 +93,14 @@ namespace TM.Messaging.Consumer
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Erro ao processar mensagem da fila {queueName}. Enviando para DLQ: {ex.Message}");
+                    _logger.LogError("Erro ao processar mensagem da fila {QueueName}. Enviando para DLQ: {Message}", queueName, ex.Message);
 
                     // Envia para DLQ rejeitando sem requeue
                     _channel.BasicReject(deliveryTag: ea.DeliveryTag, requeue: false);
                 }
             };
 
-            var consumerTag = _channel.BasicConsume(queueName, autoAck: true, consumer);
+            var consumerTag = _channel.BasicConsume(queueName, autoAck: false, consumer);
             _consumerTags.Add(consumerTag);
         }
 

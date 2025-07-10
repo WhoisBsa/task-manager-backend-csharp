@@ -8,6 +8,11 @@ namespace TM.Messaging.Factories
     public class RabbitMQConnectionFactory(IOptions<RabbitMQSettings> options)
     {
         private readonly RabbitMQSettings _options = options.Value;
+        protected IConnection? _connection;
+
+        public IConnection? GetConnection() {
+            return _connection;
+        }
 
         public IConnection CreateConnection()
         {
@@ -23,7 +28,8 @@ namespace TM.Messaging.Factories
             {
                 try
                 {
-                    return factory.CreateConnection();
+                    _connection = factory.CreateConnection();
+                    return _connection;
                 }
                 catch (BrokerUnreachableException ex)
                 {

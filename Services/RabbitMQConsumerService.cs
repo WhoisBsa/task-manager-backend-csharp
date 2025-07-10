@@ -44,10 +44,12 @@ namespace TM.Services
                     // Registra o consumidor para cada fila
                     _messageConsumer.ConsumeAsync(async (msg) =>
                     {
-                        try {
+                        try
+                        {
                             await ProcessMessageWithRetry(msg, currentQueue.QueueName, message, stoppingToken);
                         }
-                        catch (Exception ex) {
+                        catch (Exception ex)
+                        {
                             _logger.LogError(ex, "Falha ao processar mensagem da fila {QueueName} após todos os retries. Enviando para Dead Letter.", currentQueue.QueueName);
 
                             // Aqui você pode enviar para uma fila DLX (Dead Letter Exchange) ou salvar no banco, etc.

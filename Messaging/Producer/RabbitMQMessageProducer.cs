@@ -12,7 +12,7 @@ namespace TM.Messaging.Producer
 
         public void Publish<T>(string exchange, string routingKey, string queueName, T message)
         {
-            using var connetion = _connectionFactory.CreateConnection();
+            using var connetion = _connectionFactory.GetConnection() ?? _connectionFactory.CreateConnection();
             using var channel = connetion.CreateModel();
 
             channel.ExchangeDeclare(exchange, ExchangeType.Direct, durable: true);

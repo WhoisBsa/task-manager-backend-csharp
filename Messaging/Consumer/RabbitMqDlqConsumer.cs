@@ -22,7 +22,7 @@ namespace TM.Messaging.Consumer
         {
             _connectionFactory = connectionFactory;
             _logger = logger;
-            _connection = _connectionFactory.CreateConnection();
+            _connection = _connectionFactory.GetConnection() ?? _connectionFactory.CreateConnection();
             _channel = _connection.CreateModel();
         }
 

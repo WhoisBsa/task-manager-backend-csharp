@@ -14,8 +14,8 @@ namespace TM.Messaging.Config
         public string Exchange { get; set; } = string.Empty;
         public string ExchangeType { get; set; } = string.Empty;
 
-        public string ToString() {
-            return $"{MaxCall}, {BaseDelayMs}";
+        public override string ToString() {
+            return $"{Exchange} - {ExchangeType} - {MaxCall} -  {BaseDelayMs}";
         }
     }
 }
